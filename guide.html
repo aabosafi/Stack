@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Guide">
+<meta name="theme-color" content="#09090b" media="(prefers-color-scheme:dark)">
+<meta name="theme-color" content="#f4f4f5" media="(prefers-color-scheme:light)">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Stack · Reference</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#09090b;--surf:#131316;--surf2:#1a1a1e;--line:#242428;--line2:#33333a;
+  --ink:#fafafa;--ink2:#a1a1aa;--ink3:#6e6e78;--crit:#d03b3b;
+  --kpv:#3987e5;--nad:#d95926;--igf:#199e70;--bpc:#c98500;--ghk:#d55181;--cjc:#008300;
+}
+@media (prefers-color-scheme:light){:root{
+  color-scheme:light;
+  --bg:#f4f4f5;--surf:#fff;--surf2:#fafafa;--line:#e6e6e9;--line2:#d4d4d8;
+  --ink:#09090b;--ink2:#52525b;--ink3:#8b8b93;--crit:#c62b2b;
+  --kpv:#5598e7;--nad:#ee7a49;--igf:#35b98d;--bpc:#dda32c;--ghk:#e88fb0;--cjc:#3a9e3a;
+}}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;letter-spacing:-.005em;
+  padding:calc(18px + env(safe-area-inset-top,0px)) 13px calc(40px + env(safe-area-inset-bottom,0px));
+}
+.w{max-width:620px;margin:0 auto}
+h1{font-size:22px;letter-spacing:-.04em;margin:0 0 3px;font-weight:700}
+.sub{color:var(--ink3);font-size:12px;margin-bottom:20px}
+h2{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);
+   font-weight:680;margin:0 0 9px;padding:0 2px}
+.c{background:var(--surf);border:1px solid var(--line);border-radius:15px;
+   padding:4px 12px;margin-bottom:18px;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.08em;
+   color:var(--ink3);font-weight:650;padding:10px 7px 7px 0;border-bottom:1px solid var(--line)}
+td{padding:9px 7px 9px 0;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--ink2)}
+tr:last-child td{border-bottom:none}
+th:last-child,td:last-child{padding-right:0;text-align:right}
+.k{color:var(--ink);font-weight:650;white-space:nowrap}
+.k i{width:7px;height:7px;border-radius:50%;background:var(--ac);
+     display:inline-block;margin-right:6px;vertical-align:1px}
+.u{font-size:16px;font-weight:700;color:var(--ink);letter-spacing:-.03em}
+.sm{font-size:10.5px;color:var(--ink3);letter-spacing:0;display:block;margin-top:1px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;
+     border-bottom:1px solid var(--line);font-size:12.5px}
+.row:last-child{border-bottom:none}
+.row b{font-weight:600;color:var(--ink)}
+.row span{color:var(--ink2);text-align:right}
+ul{margin:0;padding:0;list-style:none}
+li{padding:9px 0 9px 15px;border-bottom:1px solid var(--line);position:relative;
+   font-size:12.5px;color:var(--ink2);line-height:1.5;letter-spacing:0}
+li:last-child{border-bottom:none}
+li::before{content:'';position:absolute;left:1px;top:16px;width:4px;height:4px;
+           border-radius:50%;background:var(--ink3)}
+li b{color:var(--ink);font-weight:600}
+.warn{border-left:2.5px solid var(--crit);padding-left:11px;margin-left:-13px}
+.tot{display:flex;justify-content:space-between;padding:11px 0 4px;font-size:12px;color:var(--ink3);letter-spacing:0}
+.tot b{color:var(--ink);font-weight:600}
+footer{text-align:center;font-size:10px;color:var(--ink3);line-height:1.7;margin-top:8px}
+</style>
+</head>
+<body><div class="w">
+
+<h1>Stack Reference</h1>
+<div class="sub">Option B · six concurrent · 56 days<br>Five injections across four sessions</div>
+
+<h2>Reconstitution · one vial each</h2>
+<div class="c">
+<table>
+<thead><tr><th>Vial</th><th>Contents</th><th>Add BAC</th></tr></thead>
+<tbody>
+<tr style="--ac:var(--bpc)"><td class="k"><i></i>BB20</td><td>BPC-157 15 mg<span class="sm">TB-500 5 mg</span></td><td class="u">2.0 mL</td></tr>
+<tr style="--ac:var(--cjc)"><td class="k"><i></i>CP10</td><td>CJC-1295 no DAC 5 mg<span class="sm">Ipamorelin 5 mg</span></td><td class="u">2.0 mL</td></tr>
+<tr style="--ac:var(--kpv)"><td class="k"><i></i>KP10</td><td>KPV 10 mg</td><td class="u">2.0 mL</td></tr>
+<tr style="--ac:var(--ghk)"><td class="k"><i></i>Cu50</td><td>GHK-Cu 50 mg</td><td class="u">2.5 mL</td></tr>
+<tr style="--ac:var(--igf)"><td class="k"><i></i>1G01</td><td>IGF-1 LR3 1 mg</td><td class="u">1.0 mL</td></tr>
+<tr style="--ac:var(--nad)"><td class="k"><i></i>NJ1000</td><td>NAD+ 1000 mg</td><td class="u">5.0 mL</td></tr>
+</tbody>
+</table>
+<div class="tot"><span>Uses <b>14.5 mL</b> of your 20 mL</span><span>5.5 mL spare</span></div>
+</div>
+
+<h2>Daily schedule</h2>
+<div class="c">
+<table>
+<thead><tr><th>When</th><th>What</th><th>Units</th></tr></thead>
+<tbody>
+<tr style="--ac:var(--nad)"><td>Morning</td><td class="k"><i></i>NJ1000<span class="sm">50 mg · days 1&ndash;28 · 5 on 2 off</span></td><td class="u">25</td></tr>
+<tr style="--ac:var(--igf)"><td>Post-workout</td><td class="k"><i></i>1G01<span class="sm">50 mcg · days 1&ndash;20 · with carbs</span></td><td class="u">5</td></tr>
+<tr style="--ac:var(--bpc)"><td>Evening</td><td class="k"><i></i>BB20<span class="sm">750 / 250 mcg · days 1&ndash;56 · draw first</span></td><td class="u">10</td></tr>
+<tr style="--ac:var(--kpv)"><td>Evening</td><td class="k"><i></i>KP10<span class="sm">500 mcg · days 1&ndash;20 · same syringe as BB20</span></td><td class="u">10</td></tr>
+<tr style="--ac:var(--ghk)"><td>Evening</td><td class="k"><i></i>Cu50<span class="sm">2 mg · days 1&ndash;42 · own syringe and site</span></td><td class="u">10</td></tr>
+<tr style="--ac:var(--cjc)"><td>Bedtime</td><td class="k"><i></i>CP10<span class="sm">200 / 200 mcg · days 1&ndash;56 · 5 on 2 off</span></td><td class="u">8</td></tr>
+</tbody>
+</table>
+<div class="tot"><span>CP10 first three nights only</span><span><b>4 units</b> · 100 / 100 mcg</span></div>
+</div>
+
+<h2>Vials across the full 56 days</h2>
+<div class="c">
+<div class="row"><b>BB20</b><span>3 vials · 6.0 mL</span></div>
+<div class="row"><b>CP10</b><span>2 vials · 4.0 mL</span></div>
+<div class="row"><b>Cu50</b><span>2 vials · 5.0 mL</span></div>
+<div class="row"><b>KP10</b><span>1 vial · 2.0 mL</span></div>
+<div class="row"><b>1G01</b><span>1 vial · 1.0 mL</span></div>
+<div class="row"><b>NJ1000</b><span>1 vial · 5.0 mL</span></div>
+<div class="row warn"><b>Total water needed</b><span>23 mL · you have 20 · reorder BA10</span></div>
+</div>
+
+<h2>Storage</h2>
+<div class="c">
+<div class="row"><b>BAC water</b><span>Cupboard, room temp<span class="sm">Never freeze</span></span></div>
+<div class="row"><b>Dry vials</b><span>Freezer, back not door<span class="sm">Stable a year plus</span></span></div>
+<div class="row"><b>Vial in use</b><span>Fridge, back shelf<span class="sm">Never returns to freezer</span></span></div>
+<div class="row warn"><b>Before reconstituting</b><span>Warm sealed 20&ndash;30 min<span class="sm">Cold vial pulls in moisture</span></span></div>
+</div>
+
+<h2>Rules that actually matter</h2>
+<div class="c">
+<ul>
+<li><b>CP10 needs an empty stomach.</b> Two hours after food, nothing to eat for 30 minutes after. Glucose blunts the GH pulse and wastes the dose.</li>
+<li><b>1G01 is the opposite.</b> Never fasted, never before cardio, always with a carb-containing meal. Keep fast sugar within reach for the first hour.</li>
+<li><b>1G01 runs 20 consecutive days.</b> No 5 on 2 off. In BAC water it degrades on roughly the same timeline it takes to finish the vial, so stretching it means weak final doses.</li>
+<li><b>BB20 and KP10 share one syringe and one site.</b> Draw BB20 first, then KP10, inject immediately. Both are plain peptides in BAC water with nothing that reacts. Never pre-draw and let them sit mixed. The cost is a microlitre of carryover between vials from the fixed needle, which is minor but real.</li>
+<li><b>Cu50 gets its own syringe and its own site.</b> Copper is redox-active. Fattiest site you have, and it stings.</li>
+<li><b>NJ1000 goes in slowly.</b> 30 to 60 seconds, roomy site. Morning only, it disrupts sleep.</li>
+<li><b>Reconstitute gently.</b> Water down the inside wall, swirl, never shake. Each compound in its own vial, never combined.</li>
+<li><b>Rotate sites every time.</b> Six shots a day saturates the map. Persistent lumps mean the schedule, not your technique.</li>
+</ul>
+</div>
+
+<h2>Watch</h2>
+<div class="c">
+<ul>
+<li><b>Two compounds push the IGF axis at once.</b> CP10 raises GH which raises IGF-1, and 1G01 adds exogenous signal on top. Bloodwork before starting and again around week four: IGF-1, fasting glucose, HbA1c.</li>
+<li><b>Hypoglycemia is the real 1G01 risk.</b> The hunger is the symptom you notice first. Shakiness, sweating, confusion or odd anxiety means eat immediately.</li>
+<li><b>Effects fading late in a vial is the vial.</b> Expect 10 to 20 percent potency loss across 20 days of IGF-1 in BAC water. Do not chase it with a higher dose.</li>
+</ul>
+</div>
+
+<footer>
+Working reference, not medical advice.<br>
+Compounds sold labeled for research, not approved for human use.
+</footer>
+</div></body>
+</html>

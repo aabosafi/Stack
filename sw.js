@@ -1,6 +1,6 @@
 /* Cache-first shell so the tracker opens with no signal. */
-const CACHE = 'stack-v1';
-const ASSETS = ['./', './index.html', './manifest.json', './icon-180.png', './icon-512.png'];
+const CACHE = 'stack-v3';
+const ASSETS = ['./', './index.html', './guide.html', './manifest.json', './icon-180.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));

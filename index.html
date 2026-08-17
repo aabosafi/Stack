@@ -131,6 +131,8 @@ header{
 .sitebtn em{font-style:normal;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
 .sitebtn b{font-size:12px;font-weight:600;text-align:center;line-height:1.2}
 .sitebtn.warn b{color:var(--crit)}
+.sitebtn.linked{background:var(--surf2)}
+.sitebtn.linked em{color:var(--ac)}
 .note{
   font-size:11.5px;padding:8px 12px;margin:-3px 0 9px;border-radius:11px;
   background:var(--surf);border:1px solid var(--line);color:var(--ink2);letter-spacing:0;
@@ -385,8 +387,6 @@ const TOTAL = 56;
 /* Accent slots follow the on-screen order (morning to bedtime) so adjacent
    pairs are the ones the validated palette ordering was checked against. */
 const C = [
-  { id:'kpv', code:'KP10', name:'KPV', ac:'var(--c-kpv)', slot:'morning',
-    units:10, dose:'500 mcg', from:1, to:20, pat:'daily', vialML:2.0 },
   { id:'nad', code:'NJ1000', name:'NAD+', ac:'var(--c-nad)', slot:'morning',
     units:25, dose:'50 mg', from:1, to:28, pat:'5on2off', vialML:5.0,
     note:'Push slowly, 30 to 60 seconds. Needs a roomy site.',
@@ -396,6 +396,10 @@ const C = [
     note:'Never fasted. Fast sugar within reach for the first hour.' },
   { id:'bpc', code:'BB20', name:'BPC-157 / TB-500', ac:'var(--c-bpc)', slot:'evening',
     units:10, dose:'750 / 250 mcg', from:1, to:56, pat:'daily', vialML:2.0, nearSite:true },
+  { id:'kpv', code:'KP10', name:'KPV', ac:'var(--c-kpv)', slot:'evening',
+    units:10, dose:'500 mcg', from:1, to:20, pat:'daily', vialML:2.0,
+    combinesWith:'bpc',
+    note:'Shares one syringe and one site with BB20. Draw BB20 first, then this, inject straight away. Never pre-draw and let it sit mixed.' },
   { id:'ghk', code:'Cu50', name:'GHK-Cu', ac:'var(--c-ghk)', slot:'evening',
     units:10, dose:'2 mg', from:1, to:42, pat:'daily', vialML:2.5,
     note:'Own syringe, own site. Stings. Fattiest site you have.',
@@ -408,7 +412,7 @@ const C = [
 const SLOTS = [
   { id:'morning', label:'Morning', note:'On waking' },
   { id:'postwo',  label:'Post-workout', note:'With a carb-containing meal' },
-  { id:'evening', label:'Evening', note:'Separate syringes, separate sites' },
+  { id:'evening', label:'Evening', note:'BB20 and KP10 go in one syringe, one site. Cu50 always separate.' },
   { id:'bedtime', label:'Bedtime', note:'Fasted 2h. Nothing to eat for 30 min after.' }
 ];
 
@@ -498,9 +502,12 @@ const prefList = c => (c.pref && c.pref.length) ? c.pref : DEFAULT_PREF;
 function daySites(day){
   const stored = (S.log[day] && S.log[day].sites) || {};
   const recent = recentUse(day, 3), taken = new Set(), out = {};
-  C.forEach(c => { const s = stored[c.id]; if(s){ out[c.id] = s; taken.add(s); } });
+  C.forEach(c => {
+    if(c.combinesWith) return;                       // rides along with its partner
+    const s = stored[c.id]; if(s){ out[c.id] = s; taken.add(s); }
+  });
   C.forEach((c, i) => {
-    if(out[c.id]) return;
+    if(out[c.id] || c.combinesWith) return;
     const pref = prefList(c), rot = day - 1 + i * 2;
     let pick = null;
     for(let k = 0; k < pref.length && !pick; k++){
@@ -521,6 +528,8 @@ function daySites(day){
     out[c.id] = pick || pref[rot % pref.length];
     taken.add(out[c.id]);
   });
+  /* one syringe means one site */
+  C.forEach(c => { if(c.combinesWith) out[c.id] = out[c.combinesWith]; });
   return out;
 }
 const suggestSite = (c, day) => daySites(day)[c.id];
@@ -598,7 +607,8 @@ function openSheet(cid){
   $('scrim').classList.remove('hide');
   document.body.style.overflow = 'hidden';
   $('sheet').querySelectorAll('[data-site]').forEach(el => el.onclick = () => {
-    dayRec(view).sites[sheetFor] = el.dataset.site;
+    const target = (C.find(x => x.id === sheetFor) || {}).combinesWith || sheetFor;
+    dayRec(view).sites[target] = el.dataset.site;
     save(); openSheet(sheetFor); render();
   });
   $('sheet').querySelector('[data-close]').onclick = closeSheet;
@@ -647,16 +657,18 @@ function render(){
        + '<div class="snote">'+sl.note+'</div>';
     items.forEach(c => {
       const done = !!rec.done[c.id];
-      const sid = rec.sites[c.id] || suggestSite(c, view);
+      const sid = (!c.combinesWith && rec.sites[c.id]) ? rec.sites[c.id] : suggestSite(c, view);
       const stale = tooSoon.has(sid);
+      const owner = c.combinesWith || c.id;
+      const twin = c.combinesWith ? C.find(x => x.id === c.combinesWith) : null;
       h += '<div class="dose'+(done ? ' done' : '')+'" style="--ac:'+c.ac+'">'
          +   '<button class="dtap" data-tog="'+c.id+'"><span class="box">'+CHK+'</span>'
          +     '<span class="dinfo"><span class="dcode"><i class="swatch"></i>'+c.code+'</span>'
          +       '<span class="dname">'+c.name+'</span></span>'
          +     '<span class="dunits"><b>'+unitsFor(c,view)+'</b><i>units</i>'
          +       '<span class="dsub">'+doseFor(c,view)+'</span></span></button>'
-         +   '<button class="sitebtn'+(stale ? ' warn' : '')+'" data-open="'+c.id+'">'
-         +     '<em>Site</em><b>'+siteById(sid).short+'</b></button>'
+         +   '<button class="sitebtn'+(stale ? ' warn' : '')+(twin ? ' linked' : '')+'" data-open="'+owner+'">'
+         +     '<em>'+(twin ? 'With '+twin.code : 'Site')+'</em><b>'+siteById(sid).short+'</b></button>'
          + '</div>';
       if(c.note) h += '<div class="note">'+c.note+'</div>';
     });
@@ -775,10 +787,12 @@ function renderProgress(today){
 function bind(){
   document.querySelectorAll('[data-tog]').forEach(el => el.onclick = () => {
     const r = dayRec(view), id = el.dataset.tog;
+    const cc = C.find(x => x.id === id);
     if(r.done[id]) delete r.done[id];
     else {
       r.done[id] = true;
-      if(!r.sites[id]) r.sites[id] = suggestSite(C.find(x=>x.id===id), view);
+      if(cc.combinesWith) delete r.sites[id];              // always mirrors its partner
+      else if(!r.sites[id]) r.sites[id] = suggestSite(cc, view);
     }
     save(); render();
   });
@@ -788,7 +802,11 @@ function bind(){
     const allDone = items.every(c => r.done[c.id]);
     items.forEach(c => {
       if(allDone) delete r.done[c.id];
-      else { r.done[c.id] = true; if(!r.sites[c.id]) r.sites[c.id] = suggestSite(c, view); }
+      else {
+        r.done[c.id] = true;
+        if(c.combinesWith) delete r.sites[c.id];
+        else if(!r.sites[c.id]) r.sites[c.id] = suggestSite(c, view);
+      }
     });
     save(); render();
   });
