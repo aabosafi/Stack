@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Stack">
+<meta name="theme-color" content="#09090b" media="(prefers-color-scheme:dark)">
+<meta name="theme-color" content="#f4f4f5" media="(prefers-color-scheme:light)">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-512.png">
+<title>Stack</title>
+<style>
+/* ============ monochrome base. color is reserved for compound identity. ============ */
+:root{
+  color-scheme:dark;
+  --bg:#09090b; --surf:#131316; --surf2:#1a1a1e; --surf3:#232329;
+  --line:#242428; --line2:#33333a;
+  --ink:#fafafa; --ink2:#a1a1aa; --ink3:#6e6e78; --silver:#d4d4d8;
+  --tier1:#a1a1aa; --tier2:#5c5c66; --figline:#3a3a42;
+  --crit:#d03b3b;
+  --c-kpv:#3987e5; --c-nad:#d95926; --c-igf:#199e70;
+  --c-bpc:#c98500; --c-ghk:#d55181; --c-cjc:#008300;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 24px -12px rgba(0,0,0,.7);
+}
+@media (prefers-color-scheme:light){
+  :root{
+    color-scheme:light;
+    --bg:#f4f4f5; --surf:#ffffff; --surf2:#fafafa; --surf3:#f1f1f3;
+    --line:#e6e6e9; --line2:#d4d4d8;
+    --ink:#09090b; --ink2:#52525b; --ink3:#8b8b93; --silver:#71717a;
+    --tier1:#52525b; --tier2:#a8a8b0; --figline:#c2c2c9;
+    --crit:#c62b2b;
+    --c-kpv:#5598e7; --c-nad:#ee7a49; --c-igf:#35b98d;
+    --c-bpc:#dda32c; --c-ghk:#e88fb0; --c-cjc:#3a9e3a;
+    --shadow:0 1px 2px rgba(9,9,11,.05), 0 8px 24px -14px rgba(9,9,11,.16);
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:calc(64px + env(safe-area-inset-bottom,0px));
+  letter-spacing:-.005em;
+}
+.wrap{max-width:600px;margin:0 auto;padding:0 14px}
+button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;letter-spacing:inherit}
+.hide{display:none!important}
+
+/* ---- header ---- */
+header{
+  position:sticky;top:0;z-index:30;background:var(--bg);background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:saturate(180%) blur(14px);-webkit-backdrop-filter:saturate(180%) blur(14px);
+  border-bottom:1px solid var(--line);margin-bottom:16px;
+  padding:calc(9px + env(safe-area-inset-top,0px)) 0 8px;
+}
+.hrow{display:flex;align-items:center;gap:8px}
+.nav{
+  width:42px;height:42px;border-radius:13px;flex:0 0 42px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--surf);border:1px solid var(--line);color:var(--ink2);
+}
+.nav svg{width:17px;height:17px;stroke:currentColor;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.nav:active{background:var(--surf3)}
+.nav[disabled]{opacity:.28}
+.hmid{flex:1;text-align:center;min-width:0}
+.hday{font-size:17px;font-weight:640;letter-spacing:-.03em;line-height:1.2}
+.hday span{color:var(--ink3);font-weight:450}
+.hdate{font-size:11.5px;color:var(--ink3);margin-top:1px;letter-spacing:0}
+.pill{
+  display:inline-block;margin-left:5px;padding:1px 6px;border-radius:20px;
+  background:var(--surf3);color:var(--ink2);font-size:9.5px;font-weight:650;
+  letter-spacing:.07em;text-transform:uppercase;vertical-align:1px;
+}
+.today-btn{
+  display:block;width:100%;margin-top:8px;padding:9px;border-radius:12px;
+  background:var(--surf);border:1px solid var(--line2);color:var(--ink);
+  font-size:13px;font-weight:600;
+}
+
+/* ---- sections ---- */
+.sec{margin-bottom:18px}
+.sechd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 2px 8px}
+.stitle{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3);font-weight:680}
+.snote{font-size:11.5px;color:var(--ink3);padding:0 2px 9px;margin-top:-5px;letter-spacing:0}
+.allbtn{
+  font-size:11.5px;font-weight:620;color:var(--ink2);padding:6px 11px;border-radius:9px;
+  background:var(--surf);border:1px solid var(--line);min-height:31px;
+}
+.allbtn:active{background:var(--surf3)}
+
+/* ---- dose card ---- */
+.dose{
+  display:flex;align-items:stretch;background:var(--surf);border:1px solid var(--line);
+  border-radius:16px;margin-bottom:9px;overflow:hidden;box-shadow:var(--shadow);
+  position:relative;
+}
+.dose::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ac);
+  opacity:.5;
+}
+.dose.done::before{opacity:1}
+.dose.done{border-color:var(--line2);border-color:color-mix(in srgb,var(--ac) 38%,var(--line))}
+.dtap{flex:1;display:flex;align-items:center;gap:11px;padding:13px 11px 13px 14px;min-height:66px;text-align:left;min-width:0}
+.dtap:active{background:var(--surf2)}
+.box{
+  width:26px;height:26px;flex:0 0 26px;border-radius:8px;border:1.6px solid var(--line2);
+  display:flex;align-items:center;justify-content:center;
+}
+.box svg{width:14px;height:14px;stroke:var(--bg);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.dose.done .box{background:var(--ac);border-color:var(--ac)}
+.dose.done .box svg{opacity:1;stroke:#fff}
+.dinfo{flex:1;min-width:0}
+.dcode{display:flex;align-items:center;gap:6px;font-size:14.5px;font-weight:660;letter-spacing:-.02em}
+.swatch{width:7px;height:7px;border-radius:50%;background:var(--ac);flex:0 0 7px}
+.dname{display:block;font-size:11.5px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0;margin-top:1px}
+.dunits{flex:0 0 auto;text-align:right;font-variant-numeric:tabular-nums;padding-left:4px}
+.dunits b{display:block;font-size:21px;font-weight:680;letter-spacing:-.04em;line-height:1}
+.dunits i{display:block;font-style:normal;font-size:8.5px;color:var(--ink3);letter-spacing:.11em;text-transform:uppercase;margin-top:2px}
+.dsub{display:block;font-size:10.5px;color:var(--ink3);margin-top:2px;letter-spacing:0}
+.sitebtn{
+  flex:0 0 76px;border-left:1px solid var(--line);padding:8px 5px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+}
+.sitebtn:active{background:var(--surf2)}
+.sitebtn em{font-style:normal;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+.sitebtn b{font-size:12px;font-weight:600;text-align:center;line-height:1.2}
+.sitebtn.warn b{color:var(--crit)}
+.note{
+  font-size:11.5px;padding:8px 12px;margin:-3px 0 9px;border-radius:11px;
+  background:var(--surf);border:1px solid var(--line);color:var(--ink2);letter-spacing:0;
+}
+.note b{color:var(--ink);font-weight:600}
+.empty{
+  background:var(--surf);border:1px solid var(--line);border-radius:16px;
+  padding:26px 14px;text-align:center;color:var(--ink3);font-size:13px;
+}
+
+/* ---- card / scales ---- */
+.card{background:var(--surf);border:1px solid var(--line);border-radius:16px;padding:3px 13px;box-shadow:var(--shadow)}
+.scale{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line);min-height:56px}
+.scale:first-child{border-top:none}
+.slab{flex:1;font-size:13.5px;min-width:0}
+.slab small{display:block;font-size:10.5px;color:var(--ink3);letter-spacing:0;margin-top:1px}
+.dots{display:flex;gap:5px}
+.dot{
+  width:33px;height:33px;border-radius:11px;border:1.4px solid var(--line2);
+  display:flex;align-items:center;justify-content:center;font-size:12px;
+  color:var(--ink3);font-variant-numeric:tabular-nums;
+}
+.dot.on{background:var(--ink);border-color:var(--ink);color:var(--bg);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:11px 0}
+.chip{
+  padding:8px 12px;border-radius:11px;border:1px solid var(--line2);
+  font-size:12.5px;color:var(--ink2);min-height:38px;display:flex;align-items:center;
+}
+.chip.on{background:var(--ink);border-color:var(--ink);color:var(--bg);font-weight:600}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-top:1px solid var(--line);width:100%;min-height:56px;text-align:left}
+.sw{width:48px;height:29px;flex:0 0 48px;border-radius:15px;background:var(--surf3);border:1px solid var(--line2);position:relative;transition:background .16s}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:var(--ink3);transition:transform .16s,background .16s}
+.toggle.on .sw{background:var(--ink);border-color:var(--ink)}
+.toggle.on .sw::after{transform:translateX(19px);background:var(--bg)}
+
+/* ---- progress ---- */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.tile{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:12px 11px;box-shadow:var(--shadow)}
+.tval{font-size:24px;font-weight:700;letter-spacing:-.045em;line-height:1.05;font-variant-numeric:tabular-nums}
+.tlab{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-top:4px;font-weight:600}
+.panel{background:var(--surf);border:1px solid var(--line);border-radius:16px;padding:14px 13px;margin-bottom:12px;box-shadow:var(--shadow)}
+.ptitle{font-size:12.5px;font-weight:640;margin-bottom:12px;letter-spacing:-.01em}
+.ptitle span{font-weight:400;color:var(--ink3);font-size:11.5px}
+
+.gdays{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.gcell{aspect-ratio:1;border-radius:6px;background:transparent;border:1.3px solid var(--line);position:relative}
+.gcell.done{background:var(--ink);border-color:var(--ink)}
+.gcell.part{background:var(--ink3);border-color:var(--ink3)}
+.gcell.miss{border-color:var(--crit);background:transparent;background:color-mix(in srgb,var(--crit) 16%,transparent)}
+.gcell.today{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--silver)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:10.5px;color:var(--ink3);letter-spacing:0}
+.legend span{display:flex;align-items:center;gap:5px}
+.lk{width:11px;height:11px;border-radius:3.5px;border:1.3px solid var(--line);flex:0 0 11px}
+.lk.done{background:var(--ink);border-color:var(--ink)}
+.lk.part{background:var(--ink3);border-color:var(--ink3)}
+.lk.miss{border-color:var(--crit);background:transparent;background:color-mix(in srgb,var(--crit) 16%,transparent)}
+
+.vial{padding:11px 0;border-top:1px solid var(--line)}
+.vial:first-of-type{border-top:none;padding-top:2px}
+.vrow{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12.5px;margin-bottom:7px}
+.vrow b{font-weight:620;display:flex;align-items:center;gap:6px}
+.vrow span{font-size:10.5px;color:var(--ink3);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:0}
+.bar{height:5px;border-radius:3px;background:var(--surf3);overflow:hidden}
+.bar div{height:100%;border-radius:3px;background:var(--ac);transition:width .2s}
+.bar div.low{background:var(--ink3)}
+.bar div.out{background:var(--crit)}
+
+.strip{padding:11px 0;border-top:1px solid var(--line)}
+.strip:first-of-type{border-top:none;padding-top:2px}
+.srow{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;margin-bottom:7px}
+.srow b{font-weight:620;font-size:12.5px}
+.srow span{color:var(--ink3);font-size:10.5px;font-variant-numeric:tabular-nums;letter-spacing:0}
+.bars{display:flex;align-items:flex-end;gap:2px;height:30px}
+.bars i{flex:1;border-radius:2px 2px 0 0;min-height:2px;background:var(--surf3);display:block}
+
+table{width:100%;border-collapse:collapse;font-size:11.5px;font-variant-numeric:tabular-nums;letter-spacing:0}
+th{text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);padding:0 6px 7px 0;border-bottom:1px solid var(--line);font-weight:650}
+td{padding:7px 6px 7px 0;border-bottom:1px solid var(--line);color:var(--ink2)}
+tr:last-child td{border-bottom:none}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+/* ---- body map ---- */
+.bodysvg{width:100%;display:block}
+.fig{fill:var(--surf2);stroke:var(--figline);stroke-width:1.3;stroke-linejoin:round;stroke-linecap:round}
+.zc{cursor:pointer}
+.zc circle.hit{fill:transparent;stroke:none}
+.zc .zn{fill:var(--tier2);fill-opacity:.18;stroke:var(--tier2);stroke-width:1.3;transition:all .15s}
+.zc.best .zn{fill:var(--tier1);stroke:var(--tier1);fill-opacity:.26;stroke-width:1.6}
+.zc.pref .zn{fill:var(--ac);stroke:var(--ac);fill-opacity:.3;stroke-width:1.5}
+.zc.sel .zn{fill:var(--ac);stroke:var(--ac);fill-opacity:1;stroke-width:2}
+/* recent use is marked by the slash ONLY. dashes are reserved for the avoid zone,
+   so the two never read as the same thing. */
+.zc.recent .zn{fill-opacity:.05}
+.zc .rx{stroke:var(--crit);stroke-width:1.7;stroke-linecap:round;opacity:0}
+.zc.recent .rx{opacity:.9}
+.avoid{fill:var(--crit);fill-opacity:.06;stroke:var(--crit);stroke-width:1.2;stroke-dasharray:3.5 3.5}
+.cap{fill:var(--ink3);font:650 9px system-ui;text-anchor:middle;letter-spacing:.12em}
+.tierleg{display:flex;flex-wrap:wrap;gap:11px;margin-top:11px;font-size:10.5px;color:var(--ink3);letter-spacing:0}
+.tierleg span{display:flex;align-items:center;gap:5px}
+.tierleg svg{width:14px;height:14px;flex:0 0 14px;overflow:visible}
+.rules{margin:10px 0 0;padding:0;list-style:none;font-size:12px;color:var(--ink2);letter-spacing:0}
+.rules li{padding:7px 0 7px 16px;border-top:1px solid var(--line);position:relative;line-height:1.45}
+.rules li::before{content:'';position:absolute;left:2px;top:14px;width:4px;height:4px;border-radius:50%;background:var(--ink3)}
+.rules b{color:var(--ink);font-weight:600}
+
+/* ---- sheet ---- */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:51;background:var(--surf);
+  border-top:1px solid var(--line2);border-radius:22px 22px 0 0;
+  padding:8px 14px calc(18px + env(safe-area-inset-bottom));
+  max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  box-shadow:0 -12px 40px -12px rgba(0,0,0,.5);
+}
+.grab{width:34px;height:4px;border-radius:2px;background:var(--line2);margin:4px auto 12px}
+.shhd{display:flex;align-items:center;gap:9px;margin-bottom:3px}
+.shhd .swatch{width:9px;height:9px;flex:0 0 9px}
+.shhd b{font-size:16px;font-weight:660;letter-spacing:-.02em}
+.shsub{font-size:11.5px;color:var(--ink3);margin-bottom:12px;letter-spacing:0;line-height:1.45}
+.sitegrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px}
+.sg{
+  display:flex;align-items:center;gap:8px;padding:11px 10px;border-radius:11px;
+  border:1px solid var(--line);background:var(--surf2);font-size:12.5px;min-height:44px;text-align:left;
+}
+.sg.on{border-color:var(--ac);background:var(--surf3);background:color-mix(in srgb,var(--ac) 14%,var(--surf2))}
+.sg i{width:7px;height:7px;border-radius:50%;flex:0 0 7px;background:var(--tier2)}
+.sg.pf i{background:var(--ac)}
+.sg.rc{opacity:.5}
+.sg small{margin-left:auto;font-size:9.5px;color:var(--crit);letter-spacing:0}
+.done-btn{display:block;width:100%;margin-top:14px;padding:14px;border-radius:14px;background:var(--ink);color:var(--bg);font-size:14.5px;font-weight:650}
+
+/* ---- misc ---- */
+.banner{background:var(--surf);border:1px solid var(--line2);border-left:2.5px solid var(--crit);border-radius:12px;padding:11px 13px;font-size:12.5px;margin-bottom:14px;letter-spacing:0;line-height:1.5;color:var(--ink2)}
+.banner b{color:var(--ink);font-weight:600}
+.footbtns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:18px}
+.fbtn{padding:12px 8px;border-radius:13px;border:1px solid var(--line);background:var(--surf);font-size:12.5px;font-weight:600;color:var(--ink2);min-height:46px}
+.fbtn:active{background:var(--surf3)}
+.fbtn.danger{color:var(--crit)}
+.setup{text-align:center;padding:64px 22px}
+.setup h1{font-size:27px;letter-spacing:-.045em;margin:0 0 9px;font-weight:700}
+.setup p{color:var(--ink3);font-size:13.5px;margin:0 0 30px;line-height:1.6}
+.big{display:block;width:100%;padding:16px;border-radius:15px;background:var(--ink);color:var(--bg);font-size:15px;font-weight:660}
+.dotsrow{display:flex;justify-content:center;gap:7px;margin-bottom:26px}
+.dotsrow i{width:9px;height:9px;border-radius:50%;display:block}
+footer{text-align:center;font-size:10.5px;color:var(--ink3);margin-top:22px;line-height:1.7;letter-spacing:0}
+</style>
+</head>
+<body>
+
+<div id="setup" class="wrap setup">
+  <h1>Stack</h1>
+  <div class="dotsrow">
+    <i style="background:var(--c-kpv)"></i><i style="background:var(--c-nad)"></i>
+    <i style="background:var(--c-igf)"></i><i style="background:var(--c-bpc)"></i>
+    <i style="background:var(--c-ghk)"></i><i style="background:var(--c-cjc)"></i>
+  </div>
+  <p>Six compounds, concurrent.<br>56 days.</p>
+  <button class="big" id="startBtn">Start today</button>
+  <noscript><div style="margin-top:18px;padding:13px;border:1px solid var(--line2);border-radius:12px;font-size:12.5px;color:var(--ink2);line-height:1.6">
+    JavaScript is switched off in whatever is showing this page, so the tracker cannot run here.
+    Enable JavaScript, or open this page in Safari or Chrome directly.
+  </div></noscript>
+</div>
+
+<div id="app" class="wrap hide">
+  <header>
+    <div class="hrow">
+      <button class="nav" id="prev"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="hmid">
+        <div class="hday" id="hday"></div>
+        <div class="hdate" id="hdate"></div>
+      </div>
+      <button class="nav" id="next"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+    <button class="today-btn hide" id="todayBtn">Jump to today</button>
+  </header>
+
+  <div id="banner" class="banner hide"></div>
+  <div id="doses"></div>
+
+  <div class="sec">
+    <div class="sechd"><div class="stitle">How it went</div></div>
+    <div class="card" id="scales"></div>
+  </div>
+
+  <div class="sec">
+    <div class="sechd"><div class="stitle">Anything notable</div></div>
+    <div class="card"><div class="chips" id="flags"></div></div>
+  </div>
+
+  <div class="sec">
+    <div class="sechd"><div class="stitle">Progress</div></div>
+    <div class="tiles" id="tiles"></div>
+    <div class="panel">
+      <div class="ptitle">Adherence <span>· one row per week</span></div>
+      <div class="gdays" id="gdays"></div>
+      <div class="legend">
+        <span><i class="lk done"></i>All logged</span>
+        <span><i class="lk part"></i>Partial</span>
+        <span><i class="lk miss"></i>Missed</span>
+        <span><i class="lk"></i>Upcoming</span>
+      </div>
+    </div>
+    <div class="panel"><div class="ptitle">Vials remaining</div><div id="vials"></div></div>
+    <div class="panel"><div class="ptitle">Last 14 days</div><div id="strips"></div></div>
+    <div class="panel"><div class="ptitle">Log</div><div class="tblwrap"><table id="tbl"></table></div></div>
+  </div>
+
+  <div class="sec">
+    <div class="sechd"><div class="stitle">Injection sites</div></div>
+    <div class="panel">
+      <div class="ptitle">Where to shoot <span>· L and R are yours, not the diagram's</span></div>
+      <div id="refmap"></div>
+      <div class="tierleg"><span><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.6" fill="var(--tier1)" fill-opacity=".26" stroke="var(--tier1)" stroke-width="1.6"/></svg>Recommended</span><span><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.6" fill="var(--tier2)" fill-opacity=".18" stroke="var(--tier2)" stroke-width="1.3"/></svg>Usable</span><span><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.6" fill="var(--tier2)" fill-opacity=".05" stroke="var(--tier2)" stroke-width="1.3"/><line x1="3.8" y1="10.2" x2="10.2" y2="3.8" stroke="var(--crit)" stroke-width="1.7" stroke-linecap="round"/></svg>Used recently</span><span><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.6" fill="var(--crit)" fill-opacity=".07" stroke="var(--crit)" stroke-width="1.3" stroke-dasharray="2.6 2.6"/></svg>Avoid</span></div>
+      <ul class="rules">
+        <li><b>Abdomen is first choice.</b> Most subcutaneous fat, most consistent absorption, easiest to reach. Stay outside a two inch radius from the navel, the dashed circle.</li>
+        <li><b>Flanks are a close second.</b> The love handle area holds fat reliably and is very forgiving.</li>
+        <li><b>Thighs and upper outer glute are solid backups.</b> Use the outer third of the thigh, not the front or inner surface. On the glute, upper outer quadrant only.</li>
+        <li><b>Back of the arm works but is awkward solo.</b> Hard to pinch one-handed. Fine if someone else is doing it.</li>
+        <li><b>Rotate every time.</b> Sites marked with a slash were used in the last five days. Repeated use in one spot builds scar tissue and absorption gets unpredictable.</li>
+        <li><b>Six injections a day saturates this map.</b> Fourteen sites against six daily doses means every spot gets used roughly every other day, and there is no rotation pattern that avoids it. The app picks the site that has rested longest, but if you start seeing persistent lumps or redness, that is the schedule talking, not your technique.</li>
+        <li><b>Pinch, then go in at 45 to 90 degrees.</b> Pinch an inch of skin, insert, release the pinch, inject slowly, count to five before withdrawing.</li>
+        <li><b>Skip any spot that is bruised, red, tender, scarred, or has a mole or stretch mark.</b> Also avoid the waistband line where clothing rubs all day.</li>
+        <li><b>GHK-Cu wants the fattiest site you have.</b> It stings more than the others, and thin skin makes it worse. Abdomen or flank, and never the same spot twice in a week.</li>
+        <li><b>BPC-157 can go near the injury</b> if you are treating something specific and the anatomy allows a safe subcutaneous pinch there.</li>
+        <li><b>NAD+ needs room.</b> It is a 25 unit volume, so use abdomen, glute, or thigh rather than a thin site, and push slowly.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footbtns">
+    <button class="fbtn" id="exportBtn">Back up</button>
+    <button class="fbtn" id="importBtn">Restore</button>
+    <button class="fbtn danger" id="resetBtn">Reset</button>
+  </div>
+  <input type="file" id="fileIn" accept="application/json" class="hide">
+
+  <footer>
+    Working reference, not medical advice.<br>
+    Compounds sold labeled for research, not approved for human use.
+  </footer>
+</div>
+
+<div id="scrim" class="scrim hide"></div>
+<div id="sheet" class="sheet hide"></div>
+
+<script>
+"use strict";
+const TOTAL = 56;
+
+/* ---------------- compounds ---------------- */
+/* Accent slots follow the on-screen order (morning to bedtime) so adjacent
+   pairs are the ones the validated palette ordering was checked against. */
+const C = [
+  { id:'kpv', code:'KP10', name:'KPV', ac:'var(--c-kpv)', slot:'morning',
+    units:10, dose:'500 mcg', from:1, to:20, pat:'daily', vialML:2.0 },
+  { id:'nad', code:'NJ1000', name:'NAD+', ac:'var(--c-nad)', slot:'morning',
+    units:25, dose:'50 mg', from:1, to:28, pat:'5on2off', vialML:5.0,
+    note:'Push slowly, 30 to 60 seconds. Needs a roomy site.',
+    pref:['abd-lr','abd-ll','glute-r','glute-l','thigh-r','thigh-l','abd-ur','abd-ul'] },
+  { id:'igf', code:'1G01', name:'IGF-1 LR3', ac:'var(--c-igf)', slot:'postwo',
+    units:5, dose:'50 mcg', from:1, to:20, pat:'daily', vialML:1.0,
+    note:'Never fasted. Fast sugar within reach for the first hour.' },
+  { id:'bpc', code:'BB20', name:'BPC-157 / TB-500', ac:'var(--c-bpc)', slot:'evening',
+    units:10, dose:'750 / 250 mcg', from:1, to:56, pat:'daily', vialML:2.0, nearSite:true },
+  { id:'ghk', code:'Cu50', name:'GHK-Cu', ac:'var(--c-ghk)', slot:'evening',
+    units:10, dose:'2 mg', from:1, to:42, pat:'daily', vialML:2.5,
+    note:'Own syringe, own site. Stings. Fattiest site you have.',
+    pref:['abd-lr','abd-ll','abd-ur','abd-ul','flank-r','flank-l'] },
+  { id:'cjc', code:'CP10', name:'CJC-1295 / Ipamorelin', ac:'var(--c-cjc)', slot:'bedtime',
+    units:8, dose:'200 / 200 mcg', from:1, to:56, pat:'5on2off', vialML:2.0,
+    ramp:{ thru:3, units:4, dose:'100 / 100 mcg' } }
+];
+
+const SLOTS = [
+  { id:'morning', label:'Morning', note:'On waking' },
+  { id:'postwo',  label:'Post-workout', note:'With a carb-containing meal' },
+  { id:'evening', label:'Evening', note:'Separate syringes, separate sites' },
+  { id:'bedtime', label:'Bedtime', note:'Fasted 2h. Nothing to eat for 30 min after.' }
+];
+
+/* Sites. L/R are the USER's own left and right.
+   Front view: user's right appears on the viewer's left.
+   Back view: user's right appears on the viewer's right. */
+const SITES = [
+  { id:'abd-ur', label:'Upper abdomen R', short:'Upper abdo R', v:'f', tier:'best', x:87,  y:145, r:9.5 },
+  { id:'abd-ul', label:'Upper abdomen L', short:'Upper abdo L', v:'f', tier:'best', x:123, y:145, r:9.5 },
+  { id:'abd-lr', label:'Lower abdomen R', short:'Lower abdo R', v:'f', tier:'best', x:87,  y:196, r:9.5 },
+  { id:'abd-ll', label:'Lower abdomen L', short:'Lower abdo L', v:'f', tier:'best', x:123, y:196, r:9.5 },
+  { id:'flank-r',label:'Flank R',         short:'Flank R',      v:'f', tier:'best', x:70,  y:172, r:9 },
+  { id:'flank-l',label:'Flank L',         short:'Flank L',      v:'f', tier:'best', x:140, y:172, r:9 },
+  { id:'thigh-r',label:'Outer thigh R',   short:'Thigh R',      v:'f', tier:'ok',   x:79,  y:262, r:10.5 },
+  { id:'thigh-l',label:'Outer thigh L',   short:'Thigh L',      v:'f', tier:'ok',   x:131, y:262, r:10.5 },
+  { id:'glute-l',label:'Upper glute L',   short:'Glute L',      v:'b', tier:'ok',   x:83,  y:226, r:10.5 },
+  { id:'glute-r',label:'Upper glute R',   short:'Glute R',      v:'b', tier:'ok',   x:127, y:226, r:10.5 },
+  { id:'lowbk-l',label:'Low back L',      short:'Low back L',   v:'b', tier:'ok',   x:86,  y:188, r:9.5 },
+  { id:'lowbk-r',label:'Low back R',      short:'Low back R',   v:'b', tier:'ok',   x:124, y:188, r:9.5 },
+  { id:'arm-l',  label:'Back of arm L',   short:'Arm L',        v:'b', tier:'ok',   x:46,  y:152, r:9 },
+  { id:'arm-r',  label:'Back of arm R',   short:'Arm R',        v:'b', tier:'ok',   x:164, y:152, r:9 }
+];
+const NEAR = { id:'near', label:'Near the injury', short:'Near site' };
+const siteById = id => (id === 'near' ? NEAR : SITES.find(s => s.id === id)) || SITES[0];
+
+const SCALES = [
+  { id:'sleep',  label:'Sleep quality', hint:'1 poor to 5 excellent' },
+  { id:'energy', label:'Energy',        hint:'1 flat to 5 high' },
+  { id:'hunger', label:'Hunger',        hint:'1 normal to 5 intense' }
+];
+const FLAGS = ['Site redness','Sting','Head rush','Low blood sugar','GI upset',
+               'Water retention','Tingling','Poor sleep','Flushing','Vivid dreams'];
+
+const BODY_PATHS = `
+<ellipse class="fig" cx="105" cy="42" rx="17.5" ry="20.5"/>
+<path class="fig" d="M97,60 C97,68 96,72 93,76 L117,76 C114,72 113,68 113,60 Z"/>
+<path class="fig" d="M105,74 C92,74 76,78 68,86 C62,92 60,101 61,112 C63,126 66,140 69,150
+ C71,157 72,159 72,164 C71,178 70,190 69,199 C68,205 68,207 69,210 C81,214 129,214 141,210
+ C142,207 142,205 141,199 C140,190 139,178 138,164 C138,159 139,157 141,150 C144,140 147,126 149,112
+ C150,101 148,92 142,86 C134,78 118,74 105,74 Z"/>
+<path class="fig" d="M62,90 C53,100 47,116 43,136 C39,158 35,180 32,198 C30,210 29,218 29,224
+ L43,226 C44,220 45,212 47,200 C50,182 54,160 58,140 C62,120 66,102 68,94 Z"/>
+<path class="fig" d="M148,90 C157,100 163,116 167,136 C171,158 175,180 178,198 C180,210 181,218 181,224
+ L167,226 C166,220 165,212 163,200 C160,182 156,160 152,140 C148,120 144,102 142,94 Z"/>
+<path class="fig" d="M70,212 C70,228 72,246 75,264 C77,278 78,290 79,300 C80,320 81,348 81,376
+ C81,388 81,394 82,400 L97,400 C98,394 98,388 98,376 C98,348 99,320 100,300
+ C101,286 102,268 102,252 C102,236 103,224 103,214 Z"/>
+<path class="fig" d="M140,212 C140,228 138,246 135,264 C133,278 132,290 131,300 C130,320 129,348 129,376
+ C129,388 129,394 128,400 L113,400 C112,394 112,388 112,376 C112,348 111,320 110,300
+ C109,286 108,268 108,252 C108,236 107,224 107,214 Z"/>`;
+
+/* ---------------- schedule ---------------- */
+const scheduled = (c,d) => d >= c.from && d <= c.to && (c.pat !== '5on2off' || ((d-1)%7) < 5);
+const unitsFor  = (c,d) => (c.ramp && d <= c.ramp.thru) ? c.ramp.units : c.units;
+const doseFor   = (c,d) => (c.ramp && d <= c.ramp.thru) ? c.ramp.dose  : c.dose;
+const dayList   = d => C.filter(c => scheduled(c,d));
+
+/* ---------------- state ---------------- */
+const KEY = 'stackTrackerV2';
+let store = null, S = { start:null, log:{} }, view = 1, sheetFor = null;
+try { localStorage.setItem('__t','1'); localStorage.removeItem('__t'); store = localStorage; } catch(e){ store = null; }
+function load(){ if(!store) return; try{ const r = store.getItem(KEY); if(r) S = JSON.parse(r); }catch(e){} }
+function save(){ if(!store) return; try{ store.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function dayRec(d){
+  if(!S.log[d]) S.log[d] = { done:{}, sites:{}, scales:{}, flags:[], trained:false };
+  const r = S.log[d];
+  r.done=r.done||{}; r.sites=r.sites||{}; r.scales=r.scales||{}; r.flags=r.flags||[];
+  return r;
+}
+/* sites used on the n days before `day`, across every compound */
+function recentUse(day, n){
+  const m = new Map();
+  for(let d = Math.max(1, day-n); d < day; d++){
+    const r = S.log[d]; if(!r || !r.sites) continue;
+    Object.keys(r.sites).forEach(k => { if(r.done[k]) m.set(r.sites[k], d); });
+  }
+  return m;
+}
+/* Desirability order, best first. Compounds with a restricted pref use their own. */
+const DEFAULT_PREF = ['abd-lr','abd-ll','abd-ur','abd-ul','flank-r','flank-l',
+                      'thigh-r','thigh-l','glute-l','glute-r','lowbk-l','lowbk-r','arm-l','arm-r'];
+const prefList = c => (c.pref && c.pref.length) ? c.pref : DEFAULT_PREF;
+
+/* Assign every compound a site for one day in a single pass, so two compounds
+   can never land on the same spot on the same day. Explicit picks win, then
+   each remaining compound takes the best free site not used in the last 3 days. */
+function daySites(day){
+  const stored = (S.log[day] && S.log[day].sites) || {};
+  const recent = recentUse(day, 3), taken = new Set(), out = {};
+  C.forEach(c => { const s = stored[c.id]; if(s){ out[c.id] = s; taken.add(s); } });
+  C.forEach((c, i) => {
+    if(out[c.id]) return;
+    const pref = prefList(c), rot = day - 1 + i * 2;
+    let pick = null;
+    for(let k = 0; k < pref.length && !pick; k++){
+      const cand = pref[(rot + k) % pref.length];
+      if(!taken.has(cand) && !recent.has(cand)) pick = cand;
+    }
+    /* Everything clean is taken: fall back to the free site that has gone
+       longest without use, rather than just the first free one. */
+    if(!pick){
+      const hist = recentUse(day, 7);
+      let score = Infinity;
+      pref.forEach(cand => {
+        if(taken.has(cand)) return;
+        const last = hist.has(cand) ? hist.get(cand) : -99;
+        if(last < score){ score = last; pick = cand; }
+      });
+    }
+    out[c.id] = pick || pref[rot % pref.length];
+    taken.add(out[c.id]);
+  });
+  return out;
+}
+const suggestSite = (c, day) => daySites(day)[c.id];
+
+/* ---------------- dates ---------------- */
+const ymd = dt => dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+const parseYMD = s => { const p = s.split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); };
+function dateOfDay(d){ const t = parseYMD(S.start); t.setDate(t.getDate() + (d-1)); return t; }
+const currentDay = () => Math.floor((parseYMD(ymd(new Date())) - parseYMD(S.start)) / 86400000) + 1;
+const $ = id => document.getElementById(id);
+const CHK = '<svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg>';
+
+/* ---------------- body map ---------------- */
+function bodySVG(opts){
+  const o = opts || {};
+  const sel = o.selected, pref = o.pref || [], recent = o.recent || new Map();
+  const interactive = !!o.interactive;
+  const zone = s => {
+    const cls = ['zc'];
+    if(s.tier === 'best') cls.push('best');
+    if(pref.indexOf(s.id) >= 0) cls.push('pref');
+    if(sel === s.id) cls.push('sel');
+    if(recent.has(s.id)) cls.push('recent');
+    const rx = s.r * 0.55;
+    return '<g class="'+cls.join(' ')+'"'+(interactive ? ' data-site="'+s.id+'"' : '')
+      + ' role="button" aria-label="'+s.label+'">'
+      + '<circle class="zn" cx="'+s.x+'" cy="'+s.y+'" r="'+s.r+'"/>'
+      + '<line class="rx" x1="'+(s.x-rx)+'" y1="'+(s.y+rx)+'" x2="'+(s.x+rx)+'" y2="'+(s.y-rx)+'"/>'
+      + (interactive ? '<circle class="hit" cx="'+s.x+'" cy="'+s.y+'" r="'+(s.r+7)+'"/>' : '')
+      + '</g>';
+  };
+  return '<svg class="bodysvg" viewBox="0 0 430 418" xmlns="http://www.w3.org/2000/svg">'
+    + '<g><text class="cap" x="105" y="11">FRONT</text>' + BODY_PATHS
+    +   '<circle class="avoid" cx="105" cy="172" r="14.5"/>'
+    +   SITES.filter(s => s.v === 'f').map(zone).join('')
+    + '</g>'
+    + '<g transform="translate(220,0)"><text class="cap" x="105" y="11">BACK</text>' + BODY_PATHS
+    +   SITES.filter(s => s.v === 'b').map(zone).join('')
+    + '</g></svg>';
+}
+
+const LEGEND = '<div class="tierleg"><span><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.6" fill="var(--tier1)" fill-opacity=".26" stroke="var(--tier1)" stroke-width="1.6"/></svg>Recommended</span><span><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.6" fill="var(--tier2)" fill-opacity=".18" stroke="var(--tier2)" stroke-width="1.3"/></svg>Usable</span><span><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.6" fill="var(--tier2)" fill-opacity=".05" stroke="var(--tier2)" stroke-width="1.3"/><line x1="3.8" y1="10.2" x2="10.2" y2="3.8" stroke="var(--crit)" stroke-width="1.7" stroke-linecap="round"/></svg>Used recently</span><span><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.6" fill="var(--crit)" fill-opacity=".07" stroke="var(--crit)" stroke-width="1.3" stroke-dasharray="2.6 2.6"/></svg>Avoid</span></div>';
+
+/* ---------------- sheet ---------------- */
+function openSheet(cid){
+  sheetFor = cid;
+  const c = C.find(x => x.id === cid), r = dayRec(view);
+  const sel = r.sites[cid] || suggestSite(c, view);
+  /* only ring zones when the compound is genuinely restricted, else the
+     highlight covers everything and says nothing */
+  const pref = (c.pref && c.pref.length) ? c.pref : [];
+  const recent = recentUse(view, 5);
+  const opts = SITES.map(s => s.id).concat(c.nearSite ? ['near'] : []);
+  $('sheet').innerHTML = '<div class="grab"></div>'
+    + '<div class="shhd" style="--ac:'+c.ac+'"><i class="swatch"></i><b>'+c.code+'</b>'
+    +   '<span style="font-size:12px;color:var(--ink3);letter-spacing:0">'+c.name+'</span></div>'
+    + '<div class="shsub">Tap a site. Coloured rings are preferred for this compound. '
+    +   'A slash means it was used in the last five days.</div>'
+    + '<div style="--ac:'+c.ac+'">' + bodySVG({selected:sel, pref:pref, recent:recent, interactive:true}) + '</div>'
+    + LEGEND
+
+    + '<div class="sitegrid" style="--ac:'+c.ac+'">'
+    + opts.map(id => {
+        const s = siteById(id), used = recent.get(id);
+        const cls = ['sg'];
+        if(sel === id) cls.push('on');
+        if(pref.indexOf(id) >= 0) cls.push('pf');
+        if(used) cls.push('rc');
+        return '<button class="'+cls.join(' ')+'" data-site="'+id+'"><i></i>'+s.short
+          + (used ? '<small>day '+used+'</small>' : '') + '</button>';
+      }).join('')
+    + '</div>'
+    + '<button class="done-btn" data-close="1">Done</button>';
+  $('sheet').classList.remove('hide');
+  $('scrim').classList.remove('hide');
+  document.body.style.overflow = 'hidden';
+  $('sheet').querySelectorAll('[data-site]').forEach(el => el.onclick = () => {
+    dayRec(view).sites[sheetFor] = el.dataset.site;
+    save(); openSheet(sheetFor); render();
+  });
+  $('sheet').querySelector('[data-close]').onclick = closeSheet;
+}
+function closeSheet(){
+  sheetFor = null;
+  $('sheet').classList.add('hide');
+  $('scrim').classList.add('hide');
+  document.body.style.overflow = '';
+}
+$('scrim').onclick = closeSheet;
+
+/* ---------------- render ---------------- */
+function render(){
+  const today = currentDay(), list = dayList(view), rec = dayRec(view);
+
+  $('hday').innerHTML = 'Day ' + view + ' <span>/ ' + TOTAL + '</span>';
+  $('hdate').innerHTML = dateOfDay(view).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})
+    + ' · Week ' + Math.ceil(view/7) + (view === today ? '<span class="pill">Today</span>' : '');
+  $('prev').disabled = view <= 1;
+  $('next').disabled = view >= TOTAL;
+  $('todayBtn').classList.toggle('hide', view === today || today < 1 || today > TOTAL);
+
+  const b = $('banner'); S.dismiss = S.dismiss || {};
+  const msgs = [];
+  if(!store) msgs.push('<b>Progress is not being saved.</b> Download this file and open it directly to keep a running log.');
+  const vs = vialState();
+  vs.forEach(v => { if(v.pct <= 15 && v.active) msgs.push('<b>'+v.code+'</b> vial is nearly empty. Have the next one ready.'); });
+  if(vs.some(v => v.short) && !S.dismiss.water)
+    msgs.push('<b>Water runs short.</b> All 56 days needs about 23 mL and you have 20 mL. Reorder BA10 before week three.'
+      + '<button class="allbtn" data-dismiss="water" style="margin-top:9px">Ordered it</button>');
+  b.innerHTML = msgs.join('<div style="height:10px"></div>');
+  b.classList.toggle('hide', !msgs.length);
+
+  /* the dose card flags red only at 2 days. with six shots a day most sites are
+     inside a 5 day window, so a 5 day threshold would paint everything red and
+     stop meaning anything. */
+  const tooSoon = recentUse(view, 2);
+  let h = '';
+  SLOTS.forEach(sl => {
+    const items = list.filter(c => c.slot === sl.id);
+    if(!items.length) return;
+    const allDone = items.every(c => rec.done[c.id]);
+    h += '<div class="sec"><div class="sechd"><div class="stitle">'+sl.label+'</div>'
+       + '<button class="allbtn" data-all="'+sl.id+'">'+(allDone ? 'Clear' : 'All done')+'</button></div>'
+       + '<div class="snote">'+sl.note+'</div>';
+    items.forEach(c => {
+      const done = !!rec.done[c.id];
+      const sid = rec.sites[c.id] || suggestSite(c, view);
+      const stale = tooSoon.has(sid);
+      h += '<div class="dose'+(done ? ' done' : '')+'" style="--ac:'+c.ac+'">'
+         +   '<button class="dtap" data-tog="'+c.id+'"><span class="box">'+CHK+'</span>'
+         +     '<span class="dinfo"><span class="dcode"><i class="swatch"></i>'+c.code+'</span>'
+         +       '<span class="dname">'+c.name+'</span></span>'
+         +     '<span class="dunits"><b>'+unitsFor(c,view)+'</b><i>units</i>'
+         +       '<span class="dsub">'+doseFor(c,view)+'</span></span></button>'
+         +   '<button class="sitebtn'+(stale ? ' warn' : '')+'" data-open="'+c.id+'">'
+         +     '<em>Site</em><b>'+siteById(sid).short+'</b></button>'
+         + '</div>';
+      if(c.note) h += '<div class="note">'+c.note+'</div>';
+    });
+    h += '</div>';
+  });
+  $('doses').innerHTML = h || '<div class="sec"><div class="empty">Rest day. Nothing scheduled.</div></div>';
+
+  let sh = '';
+  SCALES.forEach(s => {
+    sh += '<div class="scale"><div class="slab">'+s.label+'<small>'+s.hint+'</small></div><div class="dots">';
+    for(let i=1;i<=5;i++)
+      sh += '<button class="dot'+(rec.scales[s.id]===i ? ' on' : '')+'" data-sc="'+s.id+'" data-v="'+i+'">'+i+'</button>';
+    sh += '</div></div>';
+  });
+  sh += '<button class="toggle'+(rec.trained ? ' on' : '')+'" data-trained="1"><span class="slab">Trained today</span><span class="sw"></span></button>';
+  $('scales').innerHTML = sh;
+
+  $('flags').innerHTML = FLAGS.map(f =>
+    '<button class="chip'+(rec.flags.indexOf(f)>=0 ? ' on' : '')+'" data-flag="'+f+'">'+f+'</button>').join('');
+
+  $('refmap').innerHTML = bodySVG({ recent: recentUse(Math.max(view, today), 5) });
+
+  renderProgress(today);
+  bind();
+}
+
+function dayStatus(d, today){
+  const list = dayList(d), rec = S.log[d];
+  const n = list.filter(c => rec && rec.done && rec.done[c.id]).length;
+  if(!list.length) return { cls:'', n:0, t:0 };
+  if(n === list.length) return { cls:'done', n:n, t:list.length };
+  if(n > 0) return { cls:'part', n:n, t:list.length };
+  return { cls: d < today ? 'miss' : '', n:0, t:list.length };
+}
+
+/* volume math in whole insulin units so vial counts never drift on float remainders */
+function vialState(){
+  const out = []; let need = 0;
+  C.forEach(c => {
+    const cap = Math.round(c.vialML * 100);
+    let used = 0, planned = 0;
+    for(let d=1; d<=TOTAL; d++){
+      const r = S.log[d];
+      if(r && r.done && r.done[c.id]) used += unitsFor(c,d);
+      if(scheduled(c,d)) planned += unitsFor(c,d);
+    }
+    const totalVials = Math.max(1, Math.ceil(planned/cap));
+    const remain = cap - (used % cap);
+    need += totalVials * c.vialML;
+    out.push({ code:c.code, ac:c.ac, vialNo:Math.min(totalVials, Math.floor(used/cap)+1),
+      totalVials:totalVials, pct:Math.max(0, Math.round(remain/cap*100)),
+      active:used>0 || c.from===1, doses:Math.floor(remain/c.units), short:false });
+  });
+  if(need > 20) out.forEach(o => o.short = true);
+  return out;
+}
+
+function renderProgress(today){
+  let onTime=0, due=0, logged=0;
+  for(let d=1; d<=TOTAL; d++){
+    const list = dayList(d), r = S.log[d];
+    const n = list.filter(c => r && r.done && r.done[c.id]).length;
+    logged += n;
+    if(d <= today){ due += list.length; onTime += n; }
+  }
+  const adh = due ? Math.min(100, Math.round(onTime/due*100)) : 100;
+  $('tiles').innerHTML =
+      '<div class="tile"><div class="tval">'+adh+'%</div><div class="tlab">Adherence</div></div>'
+    + '<div class="tile"><div class="tval">'+logged+'</div><div class="tlab">Doses logged</div></div>'
+    + '<div class="tile"><div class="tval">'+Math.max(0, TOTAL-Math.max(0,today)+1)+'</div><div class="tlab">Days left</div></div>';
+
+  let g = '';
+  for(let d=1; d<=TOTAL; d++){
+    const st = dayStatus(d, today);
+    g += '<button class="gcell '+st.cls+(d===today ? ' today' : '')+'" data-day="'+d+'" title="Day '+d+': '+st.n+' of '+st.t+'"></button>';
+  }
+  $('gdays').innerHTML = g;
+
+  $('vials').innerHTML = vialState().map(v => {
+    const cls = v.pct <= 15 ? 'out' : (v.pct <= 35 ? 'low' : '');
+    return '<div class="vial" style="--ac:'+v.ac+'"><div class="vrow">'
+      + '<b><i class="swatch"></i>'+v.code+'</b>'
+      + '<span>vial '+v.vialNo+' of '+v.totalVials+' · ~'+v.doses+' doses left</span></div>'
+      + '<div class="bar"><div class="'+cls+'" style="width:'+v.pct+'%"></div></div></div>';
+  }).join('');
+
+  const from = Math.max(1, Math.min(today,TOTAL)-13), to = Math.max(from, Math.min(today,TOTAL));
+  $('strips').innerHTML = SCALES.map(s => {
+    let bars = '', vals = [];
+    for(let d=from; d<=to; d++){
+      const r = S.log[d], v = (r && r.scales) ? r.scales[s.id] : 0;
+      if(v) vals.push(v);
+      bars += '<i title="Day '+d+': '+(v||'not logged')+'" style="height:'+(v ? v/5*100 : 0)+'%'
+            + (v ? ';background:var(--ink)' : '') + '"></i>';
+    }
+    const avg = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : '—';
+    return '<div class="strip"><div class="srow"><b>'+s.label+'</b><span>avg '+avg+'</span></div>'
+         + '<div class="bars">'+bars+'</div></div>';
+  }).join('');
+
+  let rows = '<thead><tr><th>Day</th><th>Doses</th><th>Slp</th><th>Enr</th><th>Hgr</th><th>Notable</th></tr></thead><tbody>';
+  let any = false;
+  for(let d=1; d<=Math.min(today,TOTAL); d++){
+    const r = S.log[d]; if(!r) continue;
+    const st = dayStatus(d, today), sc = r.scales || {};
+    if(!st.n && !sc.sleep && !sc.energy && !sc.hunger && !(r.flags||[]).length) continue;
+    any = true;
+    rows += '<tr><td>'+d+'</td><td>'+st.n+'/'+st.t+'</td><td>'+(sc.sleep||'—')+'</td><td>'
+         + (sc.energy||'—')+'</td><td>'+(sc.hunger||'—')+'</td><td>'+((r.flags||[]).join(', ')||'—')+'</td></tr>';
+  }
+  $('tbl').innerHTML = any ? rows+'</tbody>'
+    : '<tbody><tr><td style="border:none;padding:12px 0;color:var(--ink3)">Nothing logged yet.</td></tr></tbody>';
+}
+
+/* ---------------- events ---------------- */
+function bind(){
+  document.querySelectorAll('[data-tog]').forEach(el => el.onclick = () => {
+    const r = dayRec(view), id = el.dataset.tog;
+    if(r.done[id]) delete r.done[id];
+    else {
+      r.done[id] = true;
+      if(!r.sites[id]) r.sites[id] = suggestSite(C.find(x=>x.id===id), view);
+    }
+    save(); render();
+  });
+  document.querySelectorAll('[data-open]').forEach(el => el.onclick = () => openSheet(el.dataset.open));
+  document.querySelectorAll('[data-all]').forEach(el => el.onclick = () => {
+    const r = dayRec(view), items = dayList(view).filter(c => c.slot === el.dataset.all);
+    const allDone = items.every(c => r.done[c.id]);
+    items.forEach(c => {
+      if(allDone) delete r.done[c.id];
+      else { r.done[c.id] = true; if(!r.sites[c.id]) r.sites[c.id] = suggestSite(c, view); }
+    });
+    save(); render();
+  });
+  document.querySelectorAll('[data-sc]').forEach(el => el.onclick = () => {
+    const r = dayRec(view), k = el.dataset.sc, v = +el.dataset.v;
+    if(r.scales[k] === v) delete r.scales[k]; else r.scales[k] = v;
+    save(); render();
+  });
+  document.querySelectorAll('[data-flag]').forEach(el => el.onclick = () => {
+    const r = dayRec(view), f = el.dataset.flag, i = r.flags.indexOf(f);
+    if(i >= 0) r.flags.splice(i,1); else r.flags.push(f);
+    save(); render();
+  });
+  const tr = document.querySelector('[data-trained]');
+  if(tr) tr.onclick = () => { const r = dayRec(view); r.trained = !r.trained; save(); render(); };
+  document.querySelectorAll('[data-day]').forEach(el => el.onclick = () => {
+    view = +el.dataset.day; window.scrollTo(0,0); render();
+  });
+  document.querySelectorAll('[data-dismiss]').forEach(el => el.onclick = () => {
+    S.dismiss = S.dismiss || {}; S.dismiss[el.dataset.dismiss] = true; save(); render();
+  });
+}
+
+$('prev').onclick = () => { if(view > 1){ view--; window.scrollTo(0,0); render(); } };
+$('next').onclick = () => { if(view < TOTAL){ view++; window.scrollTo(0,0); render(); } };
+$('todayBtn').onclick = () => { view = Math.min(TOTAL, Math.max(1, currentDay())); render(); };
+$('startBtn').onclick = () => { S = { start: ymd(new Date()), log:{} }; save(); boot(); };
+
+$('exportBtn').onclick = () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(S,null,2)], {type:'application/json'}));
+  a.download = 'stack-log-day' + Math.max(1, currentDay()) + '.json';
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
+$('importBtn').onclick = () => $('fileIn').click();
+$('fileIn').onchange = e => {
+  const f = e.target.files[0]; if(!f) return;
+  const fr = new FileReader();
+  fr.onload = () => { try { const d = JSON.parse(fr.result); if(d && d.start){ S = d; save(); boot(); } } catch(err){} };
+  fr.readAsText(f);
+};
+$('resetBtn').onclick = () => {
+  if(!window.confirm('Erase the whole log and start over?')) return;
+  S = { start:null, log:{} };
+  if(store) try { store.removeItem(KEY); } catch(e){}
+  boot();
+};
+
+function boot(){
+  closeSheet();
+  if(!S.start){ $('setup').classList.remove('hide'); $('app').classList.add('hide'); return; }
+  $('setup').classList.add('hide'); $('app').classList.remove('hide');
+  view = Math.min(TOTAL, Math.max(1, currentDay()));
+  render();
+}
+load(); boot();
+
+/* offline support once installed to the home screen */
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
