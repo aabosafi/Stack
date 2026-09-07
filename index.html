@@ -1000,7 +1000,6 @@ function render(){
   const msgs = [];
   if(!store) msgs.push('<b>Progress is not being saved.</b> Download this file and open it directly to keep a running log.');
   const vs = vialState();
-  vs.forEach(v => { if(v.pct <= 15 && v.active) msgs.push('<b>'+v.code+'</b> vial is nearly empty. Have the next one ready.'); });
   const ended = C.filter(c => finished(c, view) && view - win(c).to <= 3);
   if(ended.length) msgs.push('<b>'+ended.map(c => c.code).join(' and ')
     + (ended.length > 1 ? '</b> finished' : '</b> finished') + ' on day '

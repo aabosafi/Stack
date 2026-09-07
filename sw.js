@@ -1,5 +1,5 @@
 /* Cache-first shell so the tracker opens with no signal. */
-const CACHE = 'stack-v5';
+const CACHE = 'stack-v6';
 const ASSETS = ['./', './index.html', './guide.html', './manifest.json', './icon-180.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
