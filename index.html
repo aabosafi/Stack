@@ -311,6 +311,16 @@ tr:last-child td{border-bottom:none}
   border:1px solid var(--line);font-size:12.5px;color:var(--ink2);letter-spacing:0;line-height:1.5}
 .findbox b{color:var(--ink);font-weight:620}
 
+/* ---- course plan ---- */
+.planrow{padding:13px 0;border-top:1px solid var(--line)}
+.planrow:first-child{border-top:none;padding-top:2px}
+.prhd{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:3px}
+.prhd b{font-size:14px;font-weight:660;display:flex;align-items:center;gap:7px;letter-spacing:-.02em}
+.prhd span{font-size:11px;color:var(--ink3);letter-spacing:0;font-variant-numeric:tabular-nums;white-space:nowrap}
+.prsub{font-size:11.5px;color:var(--ink3);letter-spacing:0;margin-bottom:9px}
+.prbtns{display:flex;flex-wrap:wrap;gap:6px}
+.prbtns .fbtn{flex:0 0 auto;padding:8px 11px;font-size:11.5px;min-height:38px;border-radius:10px}
+
 /* ---- guide tab ---- */
 .gh{margin:20px 0 9px;padding:0 2px}
 .gp{padding:4px 12px}
@@ -443,6 +453,9 @@ footer{text-align:center;font-size:10.5px;color:var(--ink3);margin-top:22px;line
   </div>
 
   <div id="v-guide" class="hide">
+  <div class="stitle gh">Course plan</div>
+  <div class="snote">One vial is one block of doses. Add a vial when you open one and the end day moves out by itself.</div>
+  <div class="panel" id="plan"></div>
 
 
 
@@ -553,7 +566,7 @@ const STANDARD = ['abd-lr','abd-ll','abd-ur','abd-ul','flank-lo-r','flank-lo-l',
 /* the four low volume compounds work the standard zones first and only borrow a
    large pad when every standard one is still resting, which keeps the eight
    large zones free for NJ1000 and Cu50. */
-const TOTAL = 56;
+let TOTAL = 56;
 
 /* ---------------- compounds ---------------- */
 /* Accent slots follow the on-screen order (morning to bedtime) so adjacent
@@ -691,8 +704,50 @@ const BODY_PATHS = `
  C129,388 129,394 128,400 L113,400 C112,394 112,388 112,376 C112,348 111,320 110,300
  C109,286 108,268 108,252 C108,236 107,224 107,214 Z"/>`;
 
-/* ---------------- schedule ---------------- */
-const scheduled = (c,d) => d >= c.from && d <= c.to && (c.pat !== '5on2off' || ((d-1)%7) < 5);
+/* ---------------- schedule ----------------
+   from and to live in S.plan so a new vial can extend a course without a redeploy.
+   The 5 on 2 off pattern stays anchored to day 1, so it never drifts. */
+const win = c => (S.plan && S.plan[c.id]) || { from:c.from, to:c.to };
+const onPattern = (c,d) => c.pat !== '5on2off' || ((d-1)%7) < 5;
+const scheduled = (c,d) => { const w = win(c); return d >= w.from && d <= w.to && onPattern(c,d); };
+const dosesPerVial = c => Math.floor(c.vialML * 100 / c.units);
+const finished = (c,today) => today > win(c).to;
+/* walk the calendar forward and return the day the nth future dose lands on */
+function dayOfNthDose(c, startDay, n){
+  let d = startDay, seen = 0;
+  while(d < startDay + 400){ if(onPattern(c,d)){ seen++; if(seen >= n) return d; } d++; }
+  return startDay;
+}
+function addVial(c, sign){
+  S.plan = S.plan || {};
+  const w = win(c), doses = dosesPerVial(c);
+  let to;
+  if(sign > 0) to = dayOfNthDose(c, w.to + 1, doses);
+  else { /* remove a vial: step back the same number of dosing days */
+    let d = w.to, seen = 0;
+    while(d > w.from && seen < doses){ if(onPattern(c,d)) seen++; if(seen < doses) d--; else break; }
+    to = Math.max(w.from, d - 1);
+  }
+  S.plan[c.id] = { from:w.from, to:to };
+  syncTotal(); save(); render();
+}
+function nudge(c, days){
+  S.plan = S.plan || {};
+  const w = win(c);
+  S.plan[c.id] = { from:w.from, to:Math.max(w.from, w.to + days) };
+  syncTotal(); save(); render();
+}
+function endToday(c){
+  S.plan = S.plan || {};
+  const w = win(c);
+  S.plan[c.id] = { from:w.from, to:Math.max(w.from, Math.min(w.to, currentDay())) };
+  syncTotal(); save(); render();
+}
+function resetPlan(c){
+  if(S.plan) delete S.plan[c.id];
+  syncTotal(); save(); render();
+}
+function syncTotal(){ TOTAL = Math.max(56, ...C.map(c => win(c).to)); }
 const unitsFor  = (c,d) => (c.ramp && d <= c.ramp.thru) ? c.ramp.units : c.units;
 const doseFor   = (c,d) => (c.ramp && d <= c.ramp.thru) ? c.ramp.dose  : c.dose;
 const dayList   = d => C.filter(c => scheduled(c,d));
@@ -946,6 +1001,11 @@ function render(){
   if(!store) msgs.push('<b>Progress is not being saved.</b> Download this file and open it directly to keep a running log.');
   const vs = vialState();
   vs.forEach(v => { if(v.pct <= 15 && v.active) msgs.push('<b>'+v.code+'</b> vial is nearly empty. Have the next one ready.'); });
+  const ended = C.filter(c => finished(c, view) && view - win(c).to <= 3);
+  if(ended.length) msgs.push('<b>'+ended.map(c => c.code).join(' and ')
+    + (ended.length > 1 ? '</b> finished' : '</b> finished') + ' on day '
+    + ended.map(c => win(c).to).join(' and ')
+    + '. Opened a new vial? Guide, then Course plan.');
   if(vs.some(v => v.short) && !S.dismiss.water)
     msgs.push('<b>Water runs short.</b> All 56 days needs about 23 mL and you have 20 mL. Reorder BA10 before week three.'
       + '<button class="allbtn" data-dismiss="water" style="margin-top:9px">Ordered it</button>');
@@ -1021,6 +1081,24 @@ function render(){
       + '<br>'+z.find + '<br><i>'+z.why+'</i>';
   });
 
+  $('plan').innerHTML = C.map(c => {
+    const w = win(c), done = finished(c, today), custom = !!(S.plan && S.plan[c.id]);
+    const left = done ? 0 : (function(){ let n=0; for(let d=Math.max(today,w.from); d<=w.to; d++) if(scheduled(c,d)) n++; return n; })();
+    return '<div class="planrow" style="--ac:'+c.ac+'">'
+      + '<div class="prhd"><b><i class="swatch"></i>'+c.code+'</b>'
+      +   '<span>days '+w.from+' to '+w.to+(custom ? ' · edited' : '')+'</span></div>'
+      + '<div class="prsub">'+(done
+          ? 'Finished on day '+w.to+'. Nothing scheduled.'
+          : left+' dose'+(left===1?'':'s')+' left · '+dosesPerVial(c)+' per vial · '+c.pat.replace('5on2off','5 on 2 off'))+'</div>'
+      + '<div class="prbtns">'
+      +   '<button class="fbtn" data-vial="'+c.id+'" data-sign="1">Opened a vial</button>'
+      +   '<button class="fbtn" data-nudge="'+c.id+'" data-days="-1">&minus;1 day</button>'
+      +   '<button class="fbtn" data-nudge="'+c.id+'" data-days="1">+1 day</button>'
+      +   (done ? '' : '<button class="fbtn" data-endnow="'+c.id+'">Stop after today</button>')
+      +   (custom ? '<button class="fbtn danger" data-resetplan="'+c.id+'">Undo edits</button>' : '')
+      + '</div></div>';
+  }).join('');
+
   renderProgress(today);
   bind();
 }
@@ -1046,11 +1124,13 @@ function vialState(){
       if(scheduled(c,d)) planned += unitsFor(c,d);
     }
     const totalVials = Math.max(1, Math.ceil(planned/cap));
+    const done = finished(c, currentDay());
     const remain = cap - (used % cap);
     need += totalVials * c.vialML;
     out.push({ code:c.code, ac:c.ac, vialNo:Math.min(totalVials, Math.floor(used/cap)+1),
       totalVials:totalVials, pct:Math.max(0, Math.round(remain/cap*100)),
-      active:used>0 || c.from===1, doses:Math.floor(remain/c.units), short:false });
+      active:(used>0 || win(c).from===1) && !done, done:done,
+      doses:Math.floor(remain/c.units), short:false });
   });
   if(need > 20) out.forEach(o => o.short = true);
   return out;
@@ -1167,6 +1247,14 @@ function bind(){
     if(!r.trained) r.split = [];
     save(); render();
   };
+  document.querySelectorAll('[data-vial]').forEach(el => el.onclick = () =>
+    addVial(C.find(c => c.id === el.dataset.vial), +el.dataset.sign));
+  document.querySelectorAll('[data-nudge]').forEach(el => el.onclick = () =>
+    nudge(C.find(c => c.id === el.dataset.nudge), +el.dataset.days));
+  document.querySelectorAll('[data-endnow]').forEach(el => el.onclick = () =>
+    endToday(C.find(c => c.id === el.dataset.endnow)));
+  document.querySelectorAll('[data-resetplan]').forEach(el => el.onclick = () =>
+    resetPlan(C.find(c => c.id === el.dataset.resetplan)));
   document.querySelectorAll('[data-day]').forEach(el => el.onclick = () => {
     view = +el.dataset.day; window.scrollTo(0,0); render();
   });
@@ -1215,6 +1303,7 @@ function boot(){
   closeSheet();
   if(!S.start){ $('setup').classList.remove('hide'); $('app').classList.add('hide'); return; }
   $('setup').classList.add('hide'); $('app').classList.remove('hide');
+  syncTotal();
   view = Math.min(TOTAL, Math.max(1, currentDay()));
   setTab(tab);
   render();
